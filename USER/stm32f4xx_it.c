@@ -123,14 +123,13 @@ void PendSV_Handler(void) {}
  * @param  None
  * @retval None
  */
-void SysTick_Handler(void){}
 
 #define OrderID 4
 #define Instruction 7
 #define SendParamStart 8
 #define RevParamStart 9
-uint32_t *DataArray;
 uint32_t DataSendBuffer[128];
+uint32_t *DataArray;
 void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
 {
     if (USART_DataTypeStructure->Pointer < 4)
@@ -174,29 +173,17 @@ void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
 
                 if (USART_DataTypeStructure->CRC_Value == (USART_DataTypeStructure->Rx_Buff[USART_DataTypeStructure->Len - 1] << 8 | USART_DataTypeStructure->Rx_Buff[USART_DataTypeStructure->Len - 2]))
                 {
-                    if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x82)
-                    {
-
-                        // for (USART_DataTypeStructure->Count = 0; USART_DataTypeStructure->Count < 7; USART_DataTypeStructure->Count++) { Send_Package(USART_DataTypeStructure->Count, USART_DataTypeStructure->DataArray[USART_DataTypeStructure->Count]); }
-                    }
-                    if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x83) //?????X
+                    if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x83)
                     {
                         memcpy(&USART_DataTypeStructure->Temp_Rev[0], &USART_DataTypeStructure->Rx_Buff[12], 21 * 5);
                         USART_DataTypeStructure->RevCount = 1;
-                        // for (USART_DataTypeStructure->Count = 0; USART_DataTypeStructure->Count < 7; USART_DataTypeStructure->Count++) { USART_DataTypeStructure->DataArray[USART_DataTypeStructure->Count] = U8toU32(&USART_DataTypeStructure->Rx_Buff[13 + 5 * USART_DataTypeStructure->Count]); }
                     }
                     if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x55)
                     {
-												if(SyncW_Flag==1)
-												{
-													DataArray=&DataSendBuffer[0];
-							
-												}
-												if(SyncW_Flag==2)
-												{
-													DataArray=&DataSendBuffer[ALL_ServoNum];
-							
-												}
+                        if (Send_Cycle_Flag == 1)
+                            DataArray = &DataSendBuffer[0];
+                        if (Send_Cycle_Flag == 2)
+                            DataArray = &DataSendBuffer[ALL_ServoNum];
                         DataArray[USART_DataTypeStructure->Rx_Buff[OrderID]] = U8toU32(&USART_DataTypeStructure->Rx_Buff[RevParamStart]);
                         USART_DataTypeStructure->RevCount++;
                     }
@@ -229,9 +216,9 @@ void USART2_IRQHandler(void)
     uint8_t temp;
     if (USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
     {
-				USART_ClearITPendingBit(USART2, USART_IT_RXNE);
-        USART_ClearFlag(USART2, USART_FLAG_RXNE);
         temp = USART_ReceiveData(USART2);
+        USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+        USART_ClearFlag(USART2, USART_FLAG_RXNE);
         USART_GetData(temp, &U2_DataTypeStructure);
     }
 }
@@ -260,7 +247,46 @@ void UART4_IRQHandler(void)
     }
 }
 
+void DMA2_Stream7_IRQHandler(void)
+{
+    if (DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7) != RESET)
+    {
+        DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
+        DMA_ClearFlag(DMA2_Stream7, DMA_IT_TCIF7);
+        Send_Cycle_Flag = 0;
+    }
+}
 
+void DMA1_Stream6_IRQHandler(void)
+{
+    if (DMA_GetITStatus(DMA1_Stream6, DMA_IT_TCIF6) != RESET)
+    {
+        DMA_ClearITPendingBit(DMA1_Stream6, DMA_IT_TCIF6);
+        DMA_ClearFlag(DMA1_Stream6, DMA_IT_TCIF6);
+				delay_us(10);
+        B485_1_R;
+    }
+}
+
+void DMA1_Stream3_IRQHandler(void)
+{
+    if (DMA_GetITStatus(DMA1_Stream3, DMA_IT_TCIF3) != RESET)
+    {
+        DMA_ClearITPendingBit(DMA1_Stream3, DMA_IT_TCIF3);
+        DMA_ClearFlag(DMA1_Stream3, DMA_IT_TCIF3);
+        B485_2_R;
+    }
+}
+
+void DMA1_Stream4_IRQHandler(void)
+{
+    if (DMA_GetITStatus(DMA1_Stream4, DMA_IT_TCIF4) != RESET)
+    {
+        DMA_ClearITPendingBit(DMA1_Stream4, DMA_IT_TCIF4);
+        DMA_ClearFlag(DMA1_Stream4, DMA_IT_TCIF4);
+        B485_3_R;
+    }
+}
 
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */

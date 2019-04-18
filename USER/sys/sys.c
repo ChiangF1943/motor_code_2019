@@ -4,7 +4,7 @@
 void sys_init(void)
 {
     Peripherals_Init();
-		SPI2_Init();
+    // SPI2_Init();
     NVIC_Config();
 }
 
@@ -12,7 +12,7 @@ void delay_ms(int nms)
 {
     uint32_t i;
     SysTick_Config(SystemCoreClock / 1000);
-		SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     for (i = 0; i < nms; i++)
     {
         while (!((SysTick->CTRL) & (1 << 16)))
@@ -25,7 +25,7 @@ void delay_us(int nus)
 {
     uint32_t i;
     SysTick_Config(SystemCoreClock / 1000000);
-		SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     for (i = 0; i < nus; i++)
     {
         while (!((SysTick->CTRL) & (1 << 16)))
@@ -77,12 +77,23 @@ void NVIC_Config(void)
     NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
-		
-	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+
+    NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
     NVIC_Init(&NVIC_InitStructure);
     NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
     NVIC_Init(&NVIC_InitStructure);
     NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;
     NVIC_Init(&NVIC_InitStructure);
 
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
+
+    NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream7_IRQn;
+    NVIC_Init(&NVIC_InitStructure);
+    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream6_IRQn;
+    NVIC_Init(&NVIC_InitStructure);
+    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream3_IRQn;
+    NVIC_Init(&NVIC_InitStructure);
+    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream4_IRQn;
+    NVIC_Init(&NVIC_InitStructure);
 }
