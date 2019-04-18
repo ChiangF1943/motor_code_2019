@@ -10,6 +10,7 @@
 #include "stdlib.h"
 #include "stm32f4xx.h"
 #include "stm32f4xx_conf.h"
+<<<<<<< HEAD
 #include "string.h"
 
 #define BaudRate 1000000
@@ -18,7 +19,16 @@
 #define U3_ServoNum 0
 #define U4_ServoNum 0
 #define ServoIDStart 0
+=======
+#include ".\IMU\IMU.h"
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 
+#define BaudRate 1000000
+#define ALL_ServoNum 3
+#define U2_ServoNum 3
+#define U3_ServoNum 0
+#define U4_ServoNum 0
+#define ServoIDStart 0
 typedef struct
 {
     uint16_t Pointer;
@@ -41,14 +51,21 @@ extern USART_DataTypeDef U3_DataTypeStructure;
 extern USART_DataTypeDef U4_DataTypeStructure;
 extern uint32_t *DataArray;
 extern uint32_t DataSendBuffer[128];
+<<<<<<< HEAD
 extern uint8_t Send_Cycle_Flag;
 extern uint8_t Feedback[256];
+=======
+extern int SyncW_Flag;
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 
 extern unsigned char accraw_adis[6];
 extern unsigned char gyroraw_adis[6];
 extern unsigned char magnraw_adis[6];
+<<<<<<< HEAD
 
 extern uint8_t U2_Tx_Buff[255];
 extern uint8_t U3_Tx_Buff[255];
 extern uint8_t U4_Tx_Buff[255];
+=======
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 #endif

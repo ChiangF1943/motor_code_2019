@@ -4,7 +4,11 @@
 void sys_init(void)
 {
     Peripherals_Init();
+<<<<<<< HEAD
     // SPI2_Init();
+=======
+		SPI2_Init();
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
     NVIC_Config();
 }
 
@@ -77,14 +81,20 @@ void NVIC_Config(void)
     NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
+<<<<<<< HEAD
 
     NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+=======
+		
+	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
     NVIC_Init(&NVIC_InitStructure);
     NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
     NVIC_Init(&NVIC_InitStructure);
     NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;
     NVIC_Init(&NVIC_InitStructure);
 
+<<<<<<< HEAD
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
 
@@ -96,4 +106,6 @@ void NVIC_Config(void)
     NVIC_Init(&NVIC_InitStructure);
     NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream4_IRQn;
     NVIC_Init(&NVIC_InitStructure);
+=======
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 }

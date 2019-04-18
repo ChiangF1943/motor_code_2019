@@ -1,5 +1,7 @@
 #include "sys_config.h"
 
+
+
 void Peripherals_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -31,6 +33,7 @@ void Peripherals_Init(void)
     GPIO_Init(GPIOA, &GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
+<<<<<<< HEAD
 
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
@@ -40,9 +43,23 @@ void Peripherals_Init(void)
 
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
+=======
+		
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+		
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
+		GPIO_Init(GPIOC, &GPIO_InitStructure);
+	
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+		GPIO_Init(GPIOB, &GPIO_InitStructure);
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
+		
+		GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_USART2);
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_USART2);
 
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_USART2);
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_USART2);
@@ -60,12 +77,22 @@ void Peripherals_Init(void)
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
     USART_InitStructure.USART_Mode                = USART_Mode_Rx | USART_Mode_Tx;
     USART_Init(USART1, &USART_InitStructure);
+<<<<<<< HEAD
     USART_Init(USART2, &USART_InitStructure);
     USART_Init(USART3, &USART_InitStructure);
     USART_Init(UART4, &USART_InitStructure);
 
+=======
+		USART_Init(USART2, &USART_InitStructure);
+    USART_Init(USART3, &USART_InitStructure);
+    USART_Init(UART4, &USART_InitStructure);
+    
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
     USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
     USART_Cmd(USART1, ENABLE);
+		
+		USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+    USART_Cmd(USART2, ENABLE);
 
     USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
     USART_Cmd(USART2, ENABLE);
@@ -76,6 +103,7 @@ void Peripherals_Init(void)
     USART_ITConfig(UART4, USART_IT_RXNE, ENABLE);
     USART_Cmd(UART4, ENABLE);
 
+<<<<<<< HEAD
     DMA_DeInit(DMA2_Stream7);
     while (DMA_GetCmdStatus(DMA2_Stream7) != DISABLE) {}
     DMA_DeInit(DMA1_Stream6);
@@ -166,4 +194,39 @@ void Led2_Toggle(void)
         led2_state = 1;
         LED2_ON;
     }
+=======
+    
+}
+
+
+void Led1_Toggle(void)
+{
+	static char led1_state = 0x00;
+	if(led1_state)
+	{
+		led1_state = 0;
+		LED1_OFF;
+	}
+	else
+	{
+		led1_state = 1;
+		LED1_ON;
+	}
+}
+
+
+void Led2_Toggle(void)
+{
+	static char led2_state = 0x00;
+	if(led2_state)
+	{
+		led2_state = 0;
+		LED2_OFF;
+	}
+	else
+	{
+		led2_state = 1;
+		LED2_ON;
+	}
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 }

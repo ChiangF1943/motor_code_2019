@@ -123,13 +123,19 @@ void PendSV_Handler(void) {}
  * @param  None
  * @retval None
  */
+void SysTick_Handler(void){}
 
 #define OrderID 4
 #define Instruction 7
 #define SendParamStart 8
 #define RevParamStart 9
+<<<<<<< HEAD
 uint32_t DataSendBuffer[128];
 uint32_t *DataArray;
+=======
+uint32_t *DataArray;
+uint32_t DataSendBuffer[128];
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
 {
     if (USART_DataTypeStructure->Pointer < 4)
@@ -180,10 +186,23 @@ void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
                     }
                     if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x55)
                     {
+<<<<<<< HEAD
                         if (Send_Cycle_Flag == 1)
                             DataArray = &DataSendBuffer[0];
                         if (Send_Cycle_Flag == 2)
                             DataArray = &DataSendBuffer[ALL_ServoNum];
+=======
+												if(SyncW_Flag==1)
+												{
+													DataArray=&DataSendBuffer[0];
+							
+												}
+												if(SyncW_Flag==2)
+												{
+													DataArray=&DataSendBuffer[ALL_ServoNum];
+							
+												}
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
                         DataArray[USART_DataTypeStructure->Rx_Buff[OrderID]] = U8toU32(&USART_DataTypeStructure->Rx_Buff[RevParamStart]);
                         USART_DataTypeStructure->RevCount++;
                     }
@@ -216,9 +235,15 @@ void USART2_IRQHandler(void)
     uint8_t temp;
     if (USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
     {
+<<<<<<< HEAD
         temp = USART_ReceiveData(USART2);
         USART_ClearITPendingBit(USART2, USART_IT_RXNE);
         USART_ClearFlag(USART2, USART_FLAG_RXNE);
+=======
+				USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+        USART_ClearFlag(USART2, USART_FLAG_RXNE);
+        temp = USART_ReceiveData(USART2);
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
         USART_GetData(temp, &U2_DataTypeStructure);
     }
 }
@@ -247,6 +272,7 @@ void UART4_IRQHandler(void)
     }
 }
 
+<<<<<<< HEAD
 void DMA2_Stream7_IRQHandler(void)
 {
     if (DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7) != RESET)
@@ -287,6 +313,9 @@ void DMA1_Stream4_IRQHandler(void)
         B485_3_R;
     }
 }
+=======
+
+>>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
