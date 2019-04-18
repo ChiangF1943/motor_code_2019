@@ -123,19 +123,15 @@ void PendSV_Handler(void) {}
  * @param  None
  * @retval None
  */
-void SysTick_Handler(void){}
+void SysTick_Handler(void) {}
 
 #define OrderID 4
 #define Instruction 7
 #define SendParamStart 8
 #define RevParamStart 9
-<<<<<<< HEAD
+uint8_t *DataArray;
 uint32_t DataSendBuffer[128];
-uint32_t *DataArray;
-=======
-uint32_t *DataArray;
-uint32_t DataSendBuffer[128];
->>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
+
 void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
 {
     if (USART_DataTypeStructure->Pointer < 4)
@@ -146,7 +142,7 @@ void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
     if (USART_DataTypeStructure->Pointer == 4)
     {
         if ((USART_DataTypeStructure->Rx_Buff[0] == 0xFF) && (USART_DataTypeStructure->Rx_Buff[1] == 0xFF) && (USART_DataTypeStructure->Rx_Buff[2] == 0xFD) && (USART_DataTypeStructure->Rx_Buff[3] == 0x00))
-        {
+        {   // 正确检测到packet header
             USART_DataTypeStructure->Rx_Buff[USART_DataTypeStructure->Pointer++] = Data;
             USART_DataTypeStructure->Len                                         = Data;
         }
@@ -164,7 +160,7 @@ void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
         USART_DataTypeStructure->Rx_Buff[USART_DataTypeStructure->Pointer++] = Data;
         if (USART_DataTypeStructure->Pointer == 7)
         {
-            USART_DataTypeStructure->Len = (USART_DataTypeStructure->Rx_Buff[6] << 8 | USART_DataTypeStructure->Rx_Buff[5]) + 7;
+            USART_DataTypeStructure->Len = (USART_DataTypeStructure->Rx_Buff[6] << 8 | USART_DataTypeStructure->Rx_Buff[5]) + 7; //header + ID + len = 4byte + 1byte + 2byte = 7byte
         }
         return;
     }
@@ -179,35 +175,40 @@ void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
 
                 if (USART_DataTypeStructure->CRC_Value == (USART_DataTypeStructure->Rx_Buff[USART_DataTypeStructure->Len - 1] << 8 | USART_DataTypeStructure->Rx_Buff[USART_DataTypeStructure->Len - 2]))
                 {
-                    if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x83)
+								//一个数据包接收完成，根据不同的instruction，分别做出不同的操作
+										if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x83)  //0x83=SyncWrite，针对UART1，表示接收到上位机同步读指令
                     {
-                        memcpy(&USART_DataTypeStructure->Temp_Rev[0], &USART_DataTypeStructure->Rx_Buff[12], 21 * 5);
-                        USART_DataTypeStructure->RevCount = 1;
+                        memcpy(&USART_DataTypeStructure->Temp_Rev[0], &USART_DataTypeStructure->Rx_Buff[12], ALL_ServoNum * 3);//ok
+                        USART_DataTypeStructure->RevCount = 1;//ok
                     }
-                    if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x55)
+                    if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x55)//0x55=Status(Return)，针对UART2~4，表示接收到舵机状态返回包
                     {
-<<<<<<< HEAD
-                        if (Send_Cycle_Flag == 1)
-                            DataArray = &DataSendBuffer[0];
-                        if (Send_Cycle_Flag == 2)
-                            DataArray = &DataSendBuffer[ALL_ServoNum];
-=======
-												if(SyncW_Flag==1)
-												{
-													DataArray=&DataSendBuffer[0];
-							
-												}
-												if(SyncW_Flag==2)
-												{
-													DataArray=&DataSendBuffer[ALL_ServoNum];
-							
-												}
->>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
-                        DataArray[USART_DataTypeStructure->Rx_Buff[OrderID]] = U8toU32(&USART_DataTypeStructure->Rx_Buff[RevParamStart]);
+                        DataSendBuffer[USART_DataTypeStructure->Rx_Buff[OrderID]]=SetData(&USART_DataTypeStructure->Rx_Buff[RevParamStart]);
+                        USART_DataTypeStructure->RevCount++;
+                    }
+                    if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x84) //0x84为个人特殊设定，针对UART1，表示接收到"打开"足底压力传感器指令
+                    {
+                        FootFlag=1;
+                    }
+                    if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x85) //0x85为个人特殊设定，针对UART1，表示接收到"关闭"足底压力传感器指令
+                    {
+                        FootFlag=0;
+                    }
+                    if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x56 && FootFlag == 1) //0x56为个人特殊设定，针对UART2~4，表示收到足底力传感器状态包
+                    {   
+                        if(USART_DataTypeStructure==&U2_DataTypeStructure)  //左脚底板
+                        {
+                            memcpy(&DataArray[ALL_ServoNum],&USART_DataTypeStructure->Rx_Buff[RevParamStart],8);
+                        }
+                        if(USART_DataTypeStructure==&U4_DataTypeStructure)  //右脚底板
+                        {
+                            memcpy(&DataArray[ALL_ServoNum+2],&USART_DataTypeStructure->Rx_Buff[RevParamStart],8);
+                        }
                         USART_DataTypeStructure->RevCount++;
                     }
                 }
-                USART_DataTypeStructure->Pointer = 0;
+                //接收和处理完成，接收指针和缓存清零
+								USART_DataTypeStructure->Pointer = 0;
                 memset(USART_DataTypeStructure->Rx_Buff, 0, 256 * sizeof(uint8_t));
             }
             else
@@ -235,15 +236,9 @@ void USART2_IRQHandler(void)
     uint8_t temp;
     if (USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
     {
-<<<<<<< HEAD
-        temp = USART_ReceiveData(USART2);
         USART_ClearITPendingBit(USART2, USART_IT_RXNE);
         USART_ClearFlag(USART2, USART_FLAG_RXNE);
-=======
-				USART_ClearITPendingBit(USART2, USART_IT_RXNE);
-        USART_ClearFlag(USART2, USART_FLAG_RXNE);
         temp = USART_ReceiveData(USART2);
->>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
         USART_GetData(temp, &U2_DataTypeStructure);
     }
 }
@@ -271,51 +266,6 @@ void UART4_IRQHandler(void)
         USART_GetData(temp, &U4_DataTypeStructure);
     }
 }
-
-<<<<<<< HEAD
-void DMA2_Stream7_IRQHandler(void)
-{
-    if (DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7) != RESET)
-    {
-        DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
-        DMA_ClearFlag(DMA2_Stream7, DMA_IT_TCIF7);
-        Send_Cycle_Flag = 0;
-    }
-}
-
-void DMA1_Stream6_IRQHandler(void)
-{
-    if (DMA_GetITStatus(DMA1_Stream6, DMA_IT_TCIF6) != RESET)
-    {
-        DMA_ClearITPendingBit(DMA1_Stream6, DMA_IT_TCIF6);
-        DMA_ClearFlag(DMA1_Stream6, DMA_IT_TCIF6);
-				delay_us(10);
-        B485_1_R;
-    }
-}
-
-void DMA1_Stream3_IRQHandler(void)
-{
-    if (DMA_GetITStatus(DMA1_Stream3, DMA_IT_TCIF3) != RESET)
-    {
-        DMA_ClearITPendingBit(DMA1_Stream3, DMA_IT_TCIF3);
-        DMA_ClearFlag(DMA1_Stream3, DMA_IT_TCIF3);
-        B485_2_R;
-    }
-}
-
-void DMA1_Stream4_IRQHandler(void)
-{
-    if (DMA_GetITStatus(DMA1_Stream4, DMA_IT_TCIF4) != RESET)
-    {
-        DMA_ClearITPendingBit(DMA1_Stream4, DMA_IT_TCIF4);
-        DMA_ClearFlag(DMA1_Stream4, DMA_IT_TCIF4);
-        B485_3_R;
-    }
-}
-=======
-
->>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */

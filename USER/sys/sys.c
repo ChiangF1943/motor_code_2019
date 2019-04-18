@@ -4,11 +4,7 @@
 void sys_init(void)
 {
     Peripherals_Init();
-<<<<<<< HEAD
-    // SPI2_Init();
-=======
 		SPI2_Init();
->>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
     NVIC_Config();
 }
 
@@ -16,7 +12,7 @@ void delay_ms(int nms)
 {
     uint32_t i;
     SysTick_Config(SystemCoreClock / 1000);
-    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+		SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     for (i = 0; i < nms; i++)
     {
         while (!((SysTick->CTRL) & (1 << 16)))
@@ -29,7 +25,7 @@ void delay_us(int nus)
 {
     uint32_t i;
     SysTick_Config(SystemCoreClock / 1000000);
-    SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
+		SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
     for (i = 0; i < nus; i++)
     {
         while (!((SysTick->CTRL) & (1 << 16)))
@@ -71,6 +67,14 @@ uint16_t CRC_Acc(uint16_t crc_accum, uint8_t *data_blk_ptr, uint16_t data_blk_si
     return crc_accum;
 }
 
+uint32_t SetData(uint8_t *Data)
+{
+    uint32_t Temp;
+    //0x96 0x00 0x00 0x00 0x96 0x00 0x00 0x00
+    Temp=(Data[0]<<24)|(Data[1]<<16)|(Data[4]<<8)|Data[5];
+    return Temp;
+}
+
 void NVIC_Config(void)
 {
     NVIC_InitTypeDef NVIC_InitStructure;
@@ -81,31 +85,11 @@ void NVIC_Config(void)
     NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
-<<<<<<< HEAD
-
-    NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-=======
 		
 	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
->>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
     NVIC_Init(&NVIC_InitStructure);
     NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
     NVIC_Init(&NVIC_InitStructure);
     NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;
     NVIC_Init(&NVIC_InitStructure);
-
-<<<<<<< HEAD
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
-
-    NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream7_IRQn;
-    NVIC_Init(&NVIC_InitStructure);
-    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream6_IRQn;
-    NVIC_Init(&NVIC_InitStructure);
-    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream3_IRQn;
-    NVIC_Init(&NVIC_InitStructure);
-    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream4_IRQn;
-    NVIC_Init(&NVIC_InitStructure);
-=======
->>>>>>> 12286d8bf7e1105d32dcdc6a86d7d39d0ad1dd7b
 }
