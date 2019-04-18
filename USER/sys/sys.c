@@ -4,6 +4,7 @@
 void sys_init(void)
 {
     Peripherals_Init();
+		SPI2_Init();
     NVIC_Config();
 }
 
@@ -76,11 +77,12 @@ void NVIC_Config(void)
     NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
-
+		
+	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+    NVIC_Init(&NVIC_InitStructure);
     NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
     NVIC_Init(&NVIC_InitStructure);
     NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;
     NVIC_Init(&NVIC_InitStructure);
-    NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn;
-    NVIC_Init(&NVIC_InitStructure);
+
 }

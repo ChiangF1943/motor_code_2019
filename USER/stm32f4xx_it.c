@@ -123,14 +123,15 @@ void PendSV_Handler(void) {}
  * @param  None
  * @retval None
  */
+void SysTick_Handler(void){}
 
 #define OrderID 4
 #define Instruction 7
 #define SendParamStart 8
 #define RevParamStart 9
-uint32_t DataArray[48];
+uint32_t *DataArray;
 uint32_t DataSendBuffer[128];
-static void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
+void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructure)
 {
     if (USART_DataTypeStructure->Pointer < 4)
     {
@@ -186,12 +187,22 @@ static void USART_GetData(uint8_t Data, USART_DataTypeDef *USART_DataTypeStructu
                     }
                     if (USART_DataTypeStructure->Rx_Buff[Instruction] == 0x55)
                     {
+												if(SyncW_Flag==1)
+												{
+													DataArray=&DataSendBuffer[0];
+							
+												}
+												if(SyncW_Flag==2)
+												{
+													DataArray=&DataSendBuffer[ALL_ServoNum];
+							
+												}
                         DataArray[USART_DataTypeStructure->Rx_Buff[OrderID]] = U8toU32(&USART_DataTypeStructure->Rx_Buff[RevParamStart]);
                         USART_DataTypeStructure->RevCount++;
                     }
                 }
                 USART_DataTypeStructure->Pointer = 0;
-                memset(USART_DataTypeStructure->Rx_Buff, 0, 1024 * sizeof(uint8_t));
+                memset(USART_DataTypeStructure->Rx_Buff, 0, 256 * sizeof(uint8_t));
             }
             else
             {
@@ -210,6 +221,18 @@ void USART1_IRQHandler(void)
         USART_ClearITPendingBit(USART1, USART_IT_RXNE);
         USART_ClearFlag(USART1, USART_FLAG_RXNE);
         USART_GetData(temp, &U1_DataTypeStructure);
+    }
+}
+
+void USART2_IRQHandler(void)
+{
+    uint8_t temp;
+    if (USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
+    {
+				USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+        USART_ClearFlag(USART2, USART_FLAG_RXNE);
+        temp = USART_ReceiveData(USART2);
+        USART_GetData(temp, &U2_DataTypeStructure);
     }
 }
 
@@ -237,17 +260,7 @@ void UART4_IRQHandler(void)
     }
 }
 
-void UART5_IRQHandler(void)
-{
-    uint8_t temp;
-    if (USART_GetITStatus(UART5, USART_IT_RXNE) != RESET)
-    {
-        temp = USART_ReceiveData(UART5);
-        USART_ClearITPendingBit(UART5, USART_IT_RXNE);
-        USART_ClearFlag(UART5, USART_FLAG_RXNE);
-        USART_GetData(temp, &U5_DataTypeStructure);
-    }
-}
+
 
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
