@@ -66,27 +66,28 @@ void Send_Package(uint8_t ID, uint32_t Data)
     }
 }
 
-void Sync_Send_Read(USART_TypeDef *USARTx, uint8_t StartID, uint8_t Num)//ok
+void Sync_Send_Read(USART_TypeDef *USARTx, uint8_t Num, uint8_t *idList) // ok
 {
     uint16_t Len, CRC_Data, i;
-    Num += FootFlag;
-    Feedback[0] = 0xFF;
-    Feedback[1] = 0xFF;
-    Feedback[2] = 0xFD;
-    Feedback[3] = 0x00;
-    Feedback[4] = 0xFE;
-    Len         = Num + 7;
-    Feedback[5] = (uint8_t)Len & 0xFF;
-    Feedback[6] = (uint8_t)(Len >> 8) & 0xFF;
-    Feedback[7] = 0x82;
-    Feedback[8] = 0x80;
-    Feedback[9] = 0x00;
-    Feedback[10] = 0x08;
-    Feedback[11] = 0x00;
-    for (i = 0; i < Num; i++) { Feedback[12 + i] = StartID + i; }
+    Feedback[0]  = 0xFF; // Header1
+    Feedback[1]  = 0xFF; // Header2
+    Feedback[2]  = 0xFD; // Header3
+    Feedback[3]  = 0x00; // Reserved
+    Feedback[4]  = 0xFE; // Broadcast
+    Len          = Num + 7;
+    Feedback[5]  = (uint8_t)Len & 0xFF;        // Low-order byte of Len
+    Feedback[6]  = (uint8_t)(Len >> 8) & 0xFF; // High-order byte of Len
+    Feedback[7]  = 0x82;                       // Instruction
+    Feedback[8]  = 0x80;                       // Low-order byte from the starting address
+    Feedback[9]  = 0x00;                       // High-order byte from the starting address
+    Feedback[10] = 0x08;                       // Low-order byte from the data length(X)
+    Feedback[11] = 0x00;                       // High-order byte from the data length(X)
+    for (i = 0; i < Num; i++) { Feedback[12 + i] = idList[i]; }
     CRC_Data           = CRC_Acc(0, Feedback, 12 + Num);
     Feedback[12 + Num] = (uint8_t)CRC_Data & 0xFF;
     Feedback[13 + Num] = (uint8_t)(CRC_Data >> 8) & 0xFF;
+
+    // Start to send
     if (USARTx == USART2)
         B485_1_S;
     else if (USARTx == USART3)
@@ -107,35 +108,35 @@ void Sync_Send_Read(USART_TypeDef *USARTx, uint8_t StartID, uint8_t Num)//ok
         B485_3_R;
 }
 
-void Sync_Send_Write(USART_TypeDef *USARTx, uint8_t *Data, uint8_t Num)//ok
+void Sync_Send_Write(USART_TypeDef *USARTx, uint8_t *Data, uint8_t Num) // ok
 {
     uint16_t Len, CRC_Data, i;
-    Num += FootFlag;
-    Feedback[0]  = 0xFF;
-    Feedback[1]  = 0xFF;
-    Feedback[2]  = 0xFD;
-    Feedback[3]  = 0x00;
-    Feedback[4]  = 0xFE;
+    Feedback[0]  = 0xFF; // Header1
+    Feedback[1]  = 0xFF; // Header2
+    Feedback[2]  = 0xFD; // Header3
+    Feedback[3]  = 0x00; // Reserved
+    Feedback[4]  = 0xFE; // Broadcast
     Len          = Num * 5 + 7;
-    Feedback[5]  = (uint8_t)Len & 0xFF;
-    Feedback[6]  = (uint8_t)(Len >> 8) & 0xFF;
-    Feedback[7]  = 0x83;
-    Feedback[8]  = 0x74;
-    Feedback[9]  = 0x00;
-    Feedback[10] = 0x04;
-    Feedback[11] = 0x00;
-		for(i=0;i<Num;i++)
-		{
-			Feedback[12+5*i]=Data[3*i];
-			Feedback[13+5*i]=Data[3*i+1];
-			Feedback[14+5*i]=Data[3*i+2];
-			Feedback[15+5*i]=0x00;
-			Feedback[16+5*i]=0x00;
-			
-		}
+    Feedback[5]  = (uint8_t)Len & 0xFF;        // Low-order byte of Len
+    Feedback[6]  = (uint8_t)(Len >> 8) & 0xFF; // High-order byte of Len
+    Feedback[7]  = 0x83;                       // Instruction
+    Feedback[8]  = 0x74;                       // Low-order byte from the starting address
+    Feedback[9]  = 0x00;                       // High-order byte from the starting address
+    Feedback[10] = 0x04;                       // Low-order byte from the data length(X)
+    Feedback[11] = 0x00;                       // High-order byte from the data length(X)
+    for (i = 0; i < Num; i++)
+    {
+        Feedback[12 + 5 * i] = Data[3 * i];     // ID
+        Feedback[13 + 5 * i] = Data[3 * i + 1]; // 4byte goalPosition
+        Feedback[14 + 5 * i] = Data[3 * i + 2];
+        Feedback[15 + 5 * i] = 0x00;
+        Feedback[16 + 5 * i] = 0x00;
+    }
     CRC_Data               = CRC_Acc(0, Feedback, 12 + Num * 5);
     Feedback[12 + Num * 5] = (uint8_t)CRC_Data & 0xFF;
     Feedback[13 + Num * 5] = (uint8_t)(CRC_Data >> 8) & 0xFF;
+
+    // Start to send
     if (USARTx == USART2)
         B485_1_S;
     else if (USARTx == USART3)
@@ -156,30 +157,31 @@ void Sync_Send_Write(USART_TypeDef *USARTx, uint8_t *Data, uint8_t Num)//ok
         B485_3_R;
 }
 
-void Sync_Send_Init(USART_TypeDef *USARTx, uint8_t StartID, uint8_t Num)
+void Sync_Send_Init(USART_TypeDef *USARTx, uint8_t Num, uint8_t *idList)
 {
     uint16_t Len, CRC_Data, i;
-    Feedback[0]  = 0xFF;
-    Feedback[1]  = 0xFF;
-    Feedback[2]  = 0xFD;
-    Feedback[3]  = 0x00;
-    Feedback[4]  = 0xFE;
-    Len          = Num * 2 + 7;
-    Feedback[5]  = (uint8_t)Len & 0xFF;
-    Feedback[6]  = (uint8_t)(Len >> 8) & 0xFF;
-    Feedback[7]  = 0x83;
-    Feedback[8]  = 0x40;
-    Feedback[9]  = 0x00;
-    Feedback[10] = 0x01;
-    Feedback[11] = 0x00;
+    Feedback[0]  = 0xFF; // Header1
+    Feedback[1]  = 0xFF; // Header2
+    Feedback[2]  = 0xFD; // Header3
+    Feedback[3]  = 0x00; // Reserved
+    Feedback[4]  = 0xFE; // Broadcast
+    Len          = Num * 2 + 7; //len = 19
+    Feedback[5]  = (uint8_t)Len & 0xFF;        // Low-order byte of Len
+    Feedback[6]  = (uint8_t)(Len >> 8) & 0xFF; // High-order byte of Len
+    Feedback[7]  = 0x83;                       // instruction
+    Feedback[8]  = 0x40;                       // Low-order byte from the starting address
+    Feedback[9]  = 0x00;                       // High-order byte from the starting address
+    Feedback[10] = 0x01;                       // Low-order byte from the data length(X)
+    Feedback[11] = 0x00;                       // High-order byte from the data length(X)
     for (i = 0; i < Num; i++)
     {
-        Feedback[12 + 2 * i] = StartID + i;
+        Feedback[12 + 2 * i] = idList[i];
         Feedback[13 + 2 * i] = 0x01;
     }
     CRC_Data               = CRC_Acc(0, Feedback, 12 + Num * 2);
     Feedback[12 + Num * 2] = (uint8_t)CRC_Data & 0xFF;
     Feedback[13 + Num * 2] = (uint8_t)(CRC_Data >> 8) & 0xFF;
+    // Start to send
     if (USARTx == USART2)
         B485_1_S;
     else if (USARTx == USART3)

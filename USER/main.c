@@ -9,53 +9,109 @@ USART_DataTypeDef U1_DataTypeStructure;
 USART_DataTypeDef U2_DataTypeStructure;
 USART_DataTypeDef U3_DataTypeStructure;
 USART_DataTypeDef U4_DataTypeStructure;
-
 #define ServoIDStart 0
 #define ReadPos 0
 #define ReadSpeed 1
 
-int PeriodWriteFlag = 0;  // 保证周期内收到多个上位机的位置值，只执行一次的flag
-int FootFlag = 0;         // 是否打开脚底读取的flag，由上位机控制，跟随Instruction=0x84而打开，=0x85而关闭
-uint8_t *SendPointer;
+uint8_t IDList[30] = \
+{1, 8, 16, 18, 21, 22,\
+	2, 3, 4, 5, 6, 7,\
+9, 10, 11, 12, 13,14\
+};
+
+uint8_t NewRawData[30][40];
+
+int PeriodWriteFlag = 0; // 保证周期内收到多个上位机的位置值，只执行一次的flag
+int FootFlag        = 0; // 是否打开脚底读取的flag，由上位机控制，跟随Instruction=0x84而打开，=0x85而关闭
+uint8_t *pDataSendBuffer;
+uint16_t TimeCount;
 
 int main(void)
 {
+    uint16_t index;
+    uint16_t Len;
+    uint16_t ACCResult;
+
     sys_init();
-    delay_ms(50);
-    Sync_Send_Init(USART2, ServoIDStart, U2_ServoNum);
-    Sync_Send_Init(USART3, ServoIDStart + U2_ServoNum, U3_ServoNum);
-    Sync_Send_Init(UART4, ServoIDStart + U2_ServoNum + U3_ServoNum, U4_ServoNum);
+		U2_DataTypeStructure.RevCount = 0;
+		U3_DataTypeStructure.RevCount = 0;
+		U4_DataTypeStructure.RevCount = 0;
+    delay_ms(300);
+    Sync_Send_Init(USART2, U2_ServoNum, &IDList[0]);
+		delay_ms(1);
+    Sync_Send_Init(USART3, U3_ServoNum, &IDList[U2_ServoNum]);
+		delay_ms(1);
+    Sync_Send_Init(UART4,U4_ServoNum, &IDList[U2_ServoNum+U3_ServoNum]);
+		delay_ms(1);
     while (1)
     {
-			//如果UART1收到上位机的指令，且没有重复包
-			if (U1_DataTypeStructure.RevCount == 0x01 && PeriodWriteFlag == 0) 
+        //如果UART1收到上位机的指令，且没有重复包
+        if (U1_DataTypeStructure.RevCount == 0x01 && PeriodWriteFlag == 0)
         {
             PeriodWriteFlag = 1;
             Sync_Send_Write(USART2, &U1_DataTypeStructure.Temp_Rev[0], U2_ServoNum);
             Sync_Send_Write(USART3, &U1_DataTypeStructure.Temp_Rev[0 + 3 * U2_ServoNum], U3_ServoNum);
             Sync_Send_Write(UART4, &U1_DataTypeStructure.Temp_Rev[0 + 3 * (U2_ServoNum + U3_ServoNum)], U4_ServoNum);
-            
-            delay_us(20);
-            Sync_Send_Read(USART2, ServoIDStart, U2_ServoNum);
-            Sync_Send_Read(USART3, ServoIDStart + U2_ServoNum, U3_ServoNum);
-            Sync_Send_Read(UART4, ServoIDStart + U2_ServoNum + U3_ServoNum, U4_ServoNum);
+
+            delay_ms(1);
+            Sync_Send_Read(USART2,  U2_ServoNum, &IDList[0]);
+						delay_ms(1);
+            Sync_Send_Read(USART3,  U3_ServoNum, &IDList[U2_ServoNum]);
+						delay_ms(1);
+            Sync_Send_Read(UART4, U4_ServoNum, &IDList[U2_ServoNum + U3_ServoNum]);
             U1_DataTypeStructure.RevCount = 0;
         }
-				//如果UART2-UART4收到舵机和脚底的状态包，且包数量正确
-        if (U2_DataTypeStructure.RevCount == U2_ServoNum+FootFlag && U3_DataTypeStructure.RevCount == U3_ServoNum && U4_DataTypeStructure.RevCount == U4_ServoNum+FootFlag && PeriodWriteFlag == 1)
+        //如果UART2-UART4收到舵机和脚底的状态包，且包数量正确
+        if (U2_DataTypeStructure.RevCount == U2_ServoNum && U3_DataTypeStructure.RevCount == U3_ServoNum + FootFlag && U4_DataTypeStructure.RevCount == U4_ServoNum + FootFlag && PeriodWriteFlag == 1)
         {
+						PeriodWriteFlag=2;
+						for (index = 0; index < ALL_ServoNum ; index++)
+						{
+							DataSendBuffer[index]=SetData(&NewRawData[index][9]);
+						}
             //中断修改将数据放到DataSendBuffer中 遵循 8*ServoNum  前4位速度后四位位置
-            ADIS_ReadData();
-            SendPointer = (uint8_t *)&DataSendBuffer[2 * ALL_ServoNum+4*FootFlag];//需要修改起始位置
-            memcpy(SendPointer, accraw_adis, 6);
-            memcpy(SendPointer + 6, gyroraw_adis, 6);
-            memcpy(SendPointer + 12, magnraw_adis, 6);
+            for (index = 0; index < ALL_ServoNum + 2 * FootFlag; index++)
+            {
+                Len       = ((NewRawData[index][6] << 8) | NewRawData[index][5]) + 7;            //包长度
+                ACCResult = CRC_Acc(0, NewRawData[index], Len - 2);                              // CRC
+                if (ACCResult != (NewRawData[index][Len - 1] << 8 | NewRawData[index][Len - 2])) //检验是否相等
+                {
+                    if (index < ALL_ServoNum) //舵机数据占1个uint32,直接对应赋值
+                    {
+                        DataSendBuffer[index] = PreDataSendBuffer[index];
+                    }
+                    else
+                    {
+                        if (index == ALL_ServoNum) //足底数据占2个uint32_t 对应赋值
+                        {
+                            DataSendBuffer[ALL_ServoNum]     = PreDataSendBuffer[ALL_ServoNum];
+                            DataSendBuffer[ALL_ServoNum + 1] = PreDataSendBuffer[ALL_ServoNum + 1];
+                        }
+                        if (index == ALL_ServoNum + 1)
+                        {
+                            DataSendBuffer[ALL_ServoNum + 2] = PreDataSendBuffer[ALL_ServoNum + 2];
+                            DataSendBuffer[ALL_ServoNum + 3] = PreDataSendBuffer[ALL_ServoNum + 3];
+                        }
+                    }
+                }
+            }
 
+            ADIS_ReadData();
+            pDataSendBuffer = (uint8_t *)&DataSendBuffer[ALL_ServoNum + 4 * FootFlag]; //需要修改起始位置 //3+4*1
+            memcpy(pDataSendBuffer + 6, gyroraw_adis, 6); //gyro-x, gyro-y, gyro-z
+            memcpy(pDataSendBuffer, accraw_adis, 6); 			//acc-x,  acc-y,  acc-z
+            memcpy(pDataSendBuffer + 12, magnraw_adis, 6);//magn-x, magn-y, magn-z
             U2_DataTypeStructure.RevCount = 0;
             U3_DataTypeStructure.RevCount = 0;
-            U4_DataTypeStructure.RevCount = 0;
-            PeriodWriteFlag               = 0;
-            SendOrder(DataSendBuffer,4*ALL_ServoNum+ FootFlag*16 + 18);//修改ok
+            U4_DataTypeStructure.RevCount = 0;           
+            memcpy(PreDataSendBuffer, DataSendBuffer, 4 * ALL_ServoNum + FootFlag * 16); //拷贝数据到PreBuffer
+						TimeCount = TIM_GetCounter(TIM7);
+						//pDataSendBuffer=(uint8_t *)DataSendBuffer;
+						//pDataSendBuffer[1]=TimeCount&0xFF;
+						//pDataSendBuffer[0]=(TimeCount>>8)&0xFF;
+            SendOrder(DataSendBuffer, 4 * ALL_ServoNum + FootFlag * 4 * 4 + 18);         //修改ok  // 4byte*3motor + 1flag*16byte + 18
+            memset(DataSendBuffer,0,4 * ALL_ServoNum + FootFlag * 4 * 4 + 18);
+						PeriodWriteFlag               = 0;
         }
     }
 }

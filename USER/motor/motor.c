@@ -6,6 +6,7 @@ void Peripherals_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
+		TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     // A9 U1_TX A10 U1_RX
     // B10 U3_TX B11 U3_RX
     // C10 U4_TX C11 U4_RX
@@ -13,7 +14,7 @@ void Peripherals_Init(void)
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD, ENABLE);
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2 | RCC_APB1Periph_USART3 | RCC_APB1Periph_UART4, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2 | RCC_APB1Periph_USART3 | RCC_APB1Periph_UART4|RCC_APB1Periph_TIM7, ENABLE);
 
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
@@ -69,17 +70,28 @@ void Peripherals_Init(void)
     USART_Init(UART4, &USART_InitStructure);
     
     USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+		USART_ITConfig(USART1, USART_IT_ORE, ENABLE);
     USART_Cmd(USART1, ENABLE);
 		
 		USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+		USART_ITConfig(USART2, USART_IT_ORE, ENABLE);
     USART_Cmd(USART2, ENABLE);
 
     USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
+		USART_ITConfig(USART3, USART_IT_ORE, ENABLE);
     USART_Cmd(USART3, ENABLE);
 
     USART_ITConfig(UART4, USART_IT_RXNE, ENABLE);
+		USART_ITConfig(UART4, USART_IT_ORE, ENABLE);
     USART_Cmd(UART4, ENABLE);
-
+		
+		TIM_TimeBaseStructure.TIM_Period=(10000-1);
+		TIM_TimeBaseStructure.TIM_Prescaler=(336-1);
+		TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Up;
+		TIM_TimeBaseStructure.TIM_ClockDivision=TIM_CKD_DIV1;
+		
+		TIM_TimeBaseInit(TIM7, &TIM_TimeBaseStructure);
+		TIM_Cmd(TIM7,ENABLE);
     
 }
 

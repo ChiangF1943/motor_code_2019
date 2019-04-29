@@ -13,11 +13,11 @@
 #include ".\IMU\IMU.h"
 
 #define BaudRate 1000000
-#define ALL_ServoNum 3  //不带压力板的舵机总数
-#define U2_ServoNum 3   //仅指舵机
-#define U3_ServoNum 0   //仅指舵机
-#define U4_ServoNum 0   //仅指舵机
-#define ServoIDStart 0
+
+#define ALL_ServoNum 18 //不带压力板的舵机总数
+#define U2_ServoNum 6 //仅指舵机
+#define U3_ServoNum 6  //仅指舵机
+#define U4_ServoNum 6   //仅指舵机
 
 
 typedef struct
@@ -38,13 +38,14 @@ extern USART_DataTypeDef U3_DataTypeStructure;
 extern USART_DataTypeDef U4_DataTypeStructure;
 
 extern uint8_t *DataArray;
+extern uint8_t *pDataSendBuffer;
+extern uint8_t NewRawData[30][40]; //算上脚底，总共24个status packet, 每个包最长30byte.
 extern uint32_t DataSendBuffer[128];
+extern uint32_t PreDataSendBuffer[128];
 
+extern uint8_t IDList[30];
 extern int PeriodWriteFlag;
 extern int FootFlag;
-//extern uint16_t TargetCCRValue[5];
-//extern int WorkFlag;
-//extern int16_t Motor_Speed[4];
 
 extern unsigned char accraw_adis[6];
 extern unsigned char gyroraw_adis[6];
