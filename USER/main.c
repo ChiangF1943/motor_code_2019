@@ -12,7 +12,6 @@ USART_DataTypeDef U4_DataTypeStructure;
 #define ServoIDStart 0
 #define ReadPos 0
 #define ReadSpeed 1
-
 uint8_t IDList[30] = \
 {1, 8, 16, 18, 21, 22,\
 	2, 3, 4, 5, 6, 7,\
@@ -25,6 +24,7 @@ int PeriodWriteFlag = 0; // 保证周期内收到多个上位机的位置值，�
 int FootFlag        = 0; // 是否打开脚底读取的flag，由上位机控制，跟随Instruction=0x84而打开，=0x85而关闭
 uint8_t *pDataSendBuffer;
 uint16_t TimeCount;
+uint8_t tim7_flag = 0;
 
 int main(void)
 {
@@ -45,6 +45,15 @@ int main(void)
 		delay_ms(1);
     while (1)
     {
+				// slow start
+				if(tim7_flag <= 8 ){
+						if(tim7_flag == 2 )			{Set_Fixed_Motor_Limit((uint16_t)200, Velocity_Limit);}
+						if(tim7_flag == 3 )			Set_Fixed_Motor_Limit((uint16_t)300, Velocity_Limit);
+						if(tim7_flag == 4 )			Set_Fixed_Motor_Limit((uint16_t)500, Velocity_Limit);
+						if(tim7_flag == 6 )			Set_Fixed_Motor_Limit((uint16_t)1023, Velocity_Limit);
+						if(tim7_flag == 8 )			{TIM_Cmd(TIM7, DISABLE); tim7_flag = 10;}
+				}
+				
         //如果UART1收到上位机的指令，且没有重复包
         if (U1_DataTypeStructure.RevCount == 0x01 && PeriodWriteFlag == 0)
         {
@@ -64,7 +73,7 @@ int main(void)
         //如果UART2-UART4收到舵机和脚底的状态包，且包数量正确
         if (U2_DataTypeStructure.RevCount == U2_ServoNum && U3_DataTypeStructure.RevCount == U3_ServoNum + FootFlag && U4_DataTypeStructure.RevCount == U4_ServoNum + FootFlag && PeriodWriteFlag == 1)
         {
-						PeriodWriteFlag=2;
+						PeriodWriteFlag = 2;
 						for (index = 0; index < ALL_ServoNum ; index++)
 						{
 							DataSendBuffer[index]=SetData(&NewRawData[index][9]);

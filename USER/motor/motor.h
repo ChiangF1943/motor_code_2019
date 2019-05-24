@@ -4,6 +4,7 @@
 #include "sys_config.h"
 
 void Peripherals_Init(void);
+void TIM7_Init(unsigned short period_ms);
 void Led1_Toggle(void);
 void Led2_Toggle(void);
 

@@ -300,6 +300,17 @@ void UART4_IRQHandler(void)
     }
 }
 
+void TIM7_IRQHandler(void)
+{
+	if(TIM_GetITStatus(TIM7, TIM_IT_Update) != RESET)
+	{
+		TIM_ClearITPendingBit(TIM7, TIM_FLAG_Update);
+		
+		tim7_flag += 1;
+	}
+	
+}
+
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */

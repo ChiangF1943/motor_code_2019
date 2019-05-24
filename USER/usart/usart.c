@@ -215,4 +215,59 @@ int fgetc(FILE *f)
     return (int)USART_ReceiveData(DEBUG_USART);
 }
 
+void Set_Fixed_Motor_Limit(uint16_t Data, char InstructionCode)
+{
+    uint16_t Len, CRC_Data, i;
+		uint8_t Num = 22;// max_ID_num
+    Feedback[0]  = 0xFF; // Header1
+    Feedback[1]  = 0xFF; // Header2
+    Feedback[2]  = 0xFD; // Header3
+    Feedback[3]  = 0x00; // Reserved
+    Feedback[4]  = 0xFE; // Broadcast
+    Len          = Num * 5 + 7;
+    Feedback[5]  = (uint8_t)Len & 0xFF;        // Low-order byte of Len
+    Feedback[6]  = (uint8_t)(Len >> 8) & 0xFF; // High-order byte of Len
+    Feedback[7]  = 0x83;                       // Instruction
+		if(InstructionCode == 't') //torque limit
+				Feedback[8]  = 0x26;    							 // Low-order byte from the starting address
+		else if(InstructionCode == 'v') //velocity limit
+				Feedback[8]  = 0x2C;
+    Feedback[9]  = 0x00;                       // High-order byte from the starting address
+    Feedback[10] = 0x04;                       // Low-order byte from the data length(X)
+    Feedback[11] = 0x00;                       // High-order byte from the data length(X)
+    for (i = 0; i < Num; i++)
+    {
+        Feedback[12 + 5 * i] = i;     // ID
+        Feedback[13 + 5 * i] = (uint8_t)(Data & 0xff); // 4byte goalPosition
+        Feedback[14 + 5 * i] = (uint8_t)((Data >> 8) & 0xff);
+        Feedback[15 + 5 * i] = 0x00;
+        Feedback[16 + 5 * i] = 0x00;
+    }
+    CRC_Data               = CRC_Acc(0, Feedback, 12 + Num * 5);
+    Feedback[12 + Num * 5] = (uint8_t)CRC_Data & 0xFF;
+    Feedback[13 + Num * 5] = (uint8_t)(CRC_Data >> 8) & 0xFF;
+
+    // Start to send
+    B485_1_S;	 B485_2_S;	 B485_3_S;
+    for (i = 0; i < 14 + Num * 5; i++)
+    {
+        USART_SendData(USART2, (uint8_t)Feedback[i]);
+        while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET) {};
+    }
+    delay_us(10);
+    for (i = 0; i < 14 + Num * 5; i++)
+    {
+        USART_SendData(USART3, (uint8_t)Feedback[i]);
+        while (USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET) {};
+    }
+    delay_us(10);
+    for (i = 0; i < 14 + Num * 5; i++)
+    {
+        USART_SendData(UART4, (uint8_t)Feedback[i]);
+        while (USART_GetFlagStatus(UART4, USART_FLAG_TXE) == RESET) {};
+    }
+    delay_us(10);
+    B485_1_R; B485_2_R; B485_3_R;
+}
+
 /*********************************************END OF FILE**********************/

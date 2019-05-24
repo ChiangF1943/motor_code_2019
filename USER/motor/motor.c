@@ -95,6 +95,31 @@ void Peripherals_Init(void)
     
 }
 
+void TIM7_Init(unsigned short period_ms)
+{
+	NVIC_InitTypeDef NVIC_InitStructure;
+	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+
+	NVIC_InitStructure.NVIC_IRQChannel = TIM7_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;    
+	NVIC_Init(&NVIC_InitStructure);
+	
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM7,ENABLE);
+	TIM_DeInit(TIM7);
+	TIM_TimeBaseStructure.TIM_Period = period_ms * 2;    //1秒溢出
+	TIM_TimeBaseStructure.TIM_Prescaler = (42000 - 1);	 //1ms+1
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;	
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseInit(TIM7, &TIM_TimeBaseStructure);
+	//TIM_PrescalerConfig(TIM7, 1000, TIM_PSCReloadMode_Immediate);
+	TIM_ClearFlag(TIM7, TIM_FLAG_Update);
+	
+	TIM_ITConfig(TIM7, TIM_IT_Update, ENABLE);    //使能TIM7溢出中断
+	
+	TIM_Cmd(TIM7, ENABLE);   //使能TIM7
+}
 
 void Led1_Toggle(void)
 {

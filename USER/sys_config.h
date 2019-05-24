@@ -18,7 +18,8 @@
 #define U2_ServoNum 6 //仅指舵机
 #define U3_ServoNum 6  //仅指舵机
 #define U4_ServoNum 6   //仅指舵机
-
+#define Velocity_Limit ('v')
+#define Torque_Limit ('t')
 
 typedef struct
 {
@@ -43,10 +44,13 @@ extern uint8_t NewRawData[30][40]; //算上脚底，总共24个status packet, �
 extern uint32_t DataSendBuffer[128];
 extern uint32_t PreDataSendBuffer[128];
 
+extern uint8_t tim7_flag;
 extern uint8_t IDList[30];
 extern int PeriodWriteFlag;
 extern int FootFlag;
 
+extern uint16_t speed_limit_buff[30];
+extern uint16_t torque_limit_buff[30];
 extern unsigned char accraw_adis[6];
 extern unsigned char gyroraw_adis[6];
 extern unsigned char magnraw_adis[6];
