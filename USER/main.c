@@ -31,27 +31,33 @@ int main(void)
     uint16_t index;
     uint16_t Len;
     uint16_t ACCResult;
-
     sys_init();
 		U2_DataTypeStructure.RevCount = 0;
 		U3_DataTypeStructure.RevCount = 0;
 		U4_DataTypeStructure.RevCount = 0;
+		Set_Fixed_Motor_Limit(1023, Velocity_Limit);
     delay_ms(300);
     Sync_Send_Init(USART2, U2_ServoNum, &IDList[0]);
-		delay_ms(1);
+		delay_ms(10);
     Sync_Send_Init(USART3, U3_ServoNum, &IDList[U2_ServoNum]);
-		delay_ms(1);
-    Sync_Send_Init(UART4,U4_ServoNum, &IDList[U2_ServoNum+U3_ServoNum]);
-		delay_ms(1);
+		delay_ms(10);
+    Sync_Send_Init(UART4,	 U4_ServoNum, &IDList[U2_ServoNum+U3_ServoNum]);
+		delay_ms(100);
+		//Set_Fixed_Motor_Limit(250, Goal_Rurrent);
+		Set_Fixed_Motor_Limit(10, Profile_Velocity);
+		delay_ms(100);
+	
+		USART1_Init();
+		
+		
     while (1)
     {
 				// slow start
 				if(tim7_flag <= 8 ){
-						if(tim7_flag == 2 )			{Set_Fixed_Motor_Limit((uint16_t)200, Velocity_Limit);}
-						if(tim7_flag == 3 )			Set_Fixed_Motor_Limit((uint16_t)300, Velocity_Limit);
-						if(tim7_flag == 4 )			Set_Fixed_Motor_Limit((uint16_t)500, Velocity_Limit);
-						if(tim7_flag == 6 )			Set_Fixed_Motor_Limit((uint16_t)1023, Velocity_Limit);
-						if(tim7_flag == 8 )			{TIM_Cmd(TIM7, DISABLE); tim7_flag = 10;}
+						if(tim7_flag == 1 )			{Set_Fixed_Motor_Limit(20, Profile_Velocity);}
+						//if(tim7_flag == 3 )			{Set_Fixed_Motor_Limit(90, Profile_Velocity);}
+						//if(tim7_flag == 4 )			{Set_Fixed_Motor_Limit(110, Profile_Velocity);}
+						if(tim7_flag == 6 )			{Set_Fixed_Motor_Limit(1023, Profile_Velocity);TIM_Cmd(TIM7, DISABLE); tim7_flag = 10;}
 				}
 				
         //如果UART1收到上位机的指令，且没有重复包

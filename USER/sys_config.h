@@ -18,8 +18,10 @@
 #define U2_ServoNum 6 //仅指舵机
 #define U3_ServoNum 6  //仅指舵机
 #define U4_ServoNum 6   //仅指舵机
-#define Velocity_Limit ('v')
-#define Torque_Limit ('t')
+#define Torque_Limit 40
+#define Velocity_Limit 44
+#define Goal_Rurrent 102
+#define Profile_Velocity 112
 
 typedef struct
 {

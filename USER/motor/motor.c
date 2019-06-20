@@ -45,9 +45,6 @@ void Peripherals_Init(void)
 	
 		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
 		GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
 		
 		GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_USART2);
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_USART2);
@@ -64,14 +61,10 @@ void Peripherals_Init(void)
     USART_InitStructure.USART_Parity              = USART_Parity_No;
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
     USART_InitStructure.USART_Mode                = USART_Mode_Rx | USART_Mode_Tx;
-    USART_Init(USART1, &USART_InitStructure);
 		USART_Init(USART2, &USART_InitStructure);
     USART_Init(USART3, &USART_InitStructure);
     USART_Init(UART4, &USART_InitStructure);
     
-    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
-		USART_ITConfig(USART1, USART_IT_ORE, ENABLE);
-    USART_Cmd(USART1, ENABLE);
 		
 		USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
 		USART_ITConfig(USART2, USART_IT_ORE, ENABLE);
@@ -93,6 +86,45 @@ void Peripherals_Init(void)
 		TIM_TimeBaseInit(TIM7, &TIM_TimeBaseStructure);
 		TIM_Cmd(TIM7,ENABLE);
     
+}
+
+void USART1_Init(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+    USART_InitTypeDef USART_InitStructure;
+    // A9 U1_TX A10 U1_RX
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+	
+    GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_9;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+		
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+		
+
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
+
+    USART_InitStructure.USART_BaudRate            = BaudRate;
+    USART_InitStructure.USART_WordLength          = USART_WordLength_8b;
+    USART_InitStructure.USART_StopBits            = USART_StopBits_1;
+    USART_InitStructure.USART_Parity              = USART_Parity_No;
+    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_InitStructure.USART_Mode                = USART_Mode_Rx | USART_Mode_Tx;
+		
+    USART_Init(USART1, &USART_InitStructure);    
+    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+		USART_ITConfig(USART1, USART_IT_ORE, ENABLE);
+    USART_Cmd(USART1, ENABLE);
+		
 }
 
 void TIM7_Init(unsigned short period_ms)

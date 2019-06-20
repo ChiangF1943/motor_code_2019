@@ -7,7 +7,6 @@ void sys_init(void)
 		TIM7_Init(1000); //1000ms
     SPI2_Init();
     NVIC_Config();
-		Set_Fixed_Motor_Limit((uint16_t)400, Torque_Limit);
 }
 
 void delay_ms(int nms)
